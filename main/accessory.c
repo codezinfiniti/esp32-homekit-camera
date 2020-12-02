@@ -565,11 +565,11 @@ homekit_accessory_t *accessories[] = {
                       .services=(homekit_service_t*[])
     {
         HOMEKIT_SERVICE(ACCESSORY_INFORMATION, .characteristics=(homekit_characteristic_t*[]){
-            HOMEKIT_CHARACTERISTIC(NAME, "Camera"),
-            HOMEKIT_CHARACTERISTIC(MANUFACTURER, "HaPK"),
-            HOMEKIT_CHARACTERISTIC(SERIAL_NUMBER, "1"),
-            HOMEKIT_CHARACTERISTIC(MODEL, "1"),
-            HOMEKIT_CHARACTERISTIC(FIRMWARE_REVISION, "0.1"),
+            HOMEKIT_CHARACTERISTIC(NAME, CONFIG_ESP_HOMEKIT_DEVICE_MODEL_NAME),
+            HOMEKIT_CHARACTERISTIC(MANUFACTURER, CONFIG_ESP_HOMEKIT_DEVICE_MANUFACTURER),
+            HOMEKIT_CHARACTERISTIC(SERIAL_NUMBER, CONFIG_ESP_HOMEKIT_DEVICE_SERIAL_NUMBER),
+            HOMEKIT_CHARACTERISTIC(MODEL, CONFIG_ESP_HOMEKIT_DEVICE_MODEL_NUMBER),
+            HOMEKIT_CHARACTERISTIC(FIRMWARE_REVISION, CONFIG_ESP_HOMEKIT_DEVICE_FIRMWARE_VERSION),
             HOMEKIT_CHARACTERISTIC(IDENTIFY, camera_identify),
             NULL
         }),
@@ -613,7 +613,7 @@ homekit_accessory_t *accessories[] = {
 
 homekit_server_config_t config = {
     .accessories = accessories,
-    .password = "111-11-111",
+    .password = CONFIG_ESP_HOMEKIT_DEVICE_SETUP_CODE,
     .on_event = camera_on_event,
     .on_resource = camera_on_resource,
 };
@@ -677,6 +677,20 @@ void camera_accessory_init() {
         ESP_LOGE(TAG, "Camera init failed with error 0x%x", err);
         abort();
     }
+
+    // image sensor settings
+    sensor_t * s = esp_camera_sensor_get();
+    
+    #if CONFIG_ESP_SET_VFLIP
+        s->set_vflip(s, 1);
+    #endif
+    #if CONFIG_ESP_SET_HMIRROR
+        s->set_hmirror(s, 1);
+    #endif
+    #if CONFIG_ESP_SET_ENHANCE_IMAGE
+        s->set_saturation(s, -2);
+        s->set_contrast(s, 2);  
+    #endif
 
     tlv_values_t *video_codec_params = tlv_new();
     tlv_add_integer_value(video_codec_params, 1, 1, 1);  // Profile ID
